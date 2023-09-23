@@ -96,16 +96,23 @@ def all_possible_lines(board):
 def evaluate_board(board):
     score = 0
 
-    # Check for lines of 3 or 2
+    # Check for lines of 3, 2, and 1
     for line in all_possible_lines(board):
         if line.count('O') == 3 and line.count('') == 1:
-            score += 7
+            score += 5
         elif line.count('X') == 3 and line.count('') == 1:
-            score -= 7
-        elif line.count('O') == 2 and line.count('') == 2:
-            score += 3
+            score -= 10
+
+        if line.count('O') == 2 and line.count('') == 2:
+            score += 2
         elif line.count('X') == 2 and line.count('') == 2:
-            score -= 3
+            score -= 5
+
+        # New conditions for lines of 1
+        if line.count('O') == 1 and line.count('') == 3:
+            score += 1
+        elif line.count('X') == 1 and line.count('') == 3:
+            score -= 2  # prioritize blocking the player even when there's only one mark
 
     # Check center squares
     center_positions = [(1, 1), (1, 2), (2, 1), (2, 2)]
@@ -113,7 +120,7 @@ def evaluate_board(board):
         if board[pos[0]][pos[1]] == 'O':
             score += 2
         elif board[pos[0]][pos[1]] == 'X':
-            score -= 2
+            score -= 3  # prioritize blocking the player a bit more for center squares
 
     return score
 
@@ -127,9 +134,13 @@ def minimax(board_tuple, depth, is_maximizing, alpha, beta):
         return score
 
     if check_winner(board, 'X'):
-        return -10
+        return -10 + depth  # make the algorithm choose the quickest win
     if check_winner(board, 'O'):
-        return 10
+        return 10 - depth  # make the algorithm delay the loss
+    # if check_winner(board, 'X'):
+    #     return -10
+    # if check_winner(board, 'O'):
+    #     return 10
     if all(cell != '' for row in board for cell in row):
         return 0
 
