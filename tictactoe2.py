@@ -51,7 +51,7 @@ board = [['' for x in range(BOARD_SIZE)] for y in range(BOARD_SIZE)]
 
 def check_winner(board, player):
     BOARD_SIZE = 4
-    WIN_COUNT = 3
+    WIN_COUNT = 4
 
     # Helper function to check for 3 in a row in a list
     def check_consecutive(lst, player):
@@ -96,31 +96,67 @@ def all_possible_lines(board):
 def evaluate_board(board):
     score = 0
 
-    # Check for lines of 3, 2, and 1
+    # 1. Immediate winning moves
     for line in all_possible_lines(board):
         if line.count('O') == 3 and line.count('') == 1:
-            score += 5
+            score += 100
         elif line.count('X') == 3 and line.count('') == 1:
-            score -= 10
+            score -= 100
 
-        if line.count('O') == 2 and line.count('') == 2:
-            score += 2
-        elif line.count('X') == 2 and line.count('') == 2:
-            score -= 5
+    # 2 & 3. Forks (future winning moves)
+    forks = []
+    for i in range(BOARD_SIZE):
+        for j in range(BOARD_SIZE):
+            if board[i][j] == '':
+                board[i][j] = 'O'
+                if sum([1 for line in all_possible_lines(board) if line.count('O') == 3 and line.count('') == 1]) > 1:
+                    forks.append((i, j))
+                board[i][j] = ''
 
-        # New conditions for lines of 1
-        if line.count('O') == 1 and line.count('') == 3:
-            score += 1
-        elif line.count('X') == 1 and line.count('') == 3:
-            score -= 2  # prioritize blocking the player even when there's only one mark
+    for fork in forks:
+        if board[fork[0]][fork[1]] == '':
+            score += 50
 
-    # Check center squares
+    forks = []
+    for i in range(BOARD_SIZE):
+        for j in range(BOARD_SIZE):
+            if board[i][j] == '':
+                board[i][j] = 'X'
+                if sum([1 for line in all_possible_lines(board) if line.count('X') == 3 and line.count('') == 1]) > 1:
+                    forks.append((i, j))
+                board[i][j] = ''
+
+    for fork in forks:
+        if board[fork[0]][fork[1]] == '':
+            score -= 70  # prioritizing blocking opponent's forks higher
+
+    # 4. Center
     center_positions = [(1, 1), (1, 2), (2, 1), (2, 2)]
     for pos in center_positions:
         if board[pos[0]][pos[1]] == 'O':
-            score += 2
+            score += 15
         elif board[pos[0]][pos[1]] == 'X':
-            score -= 3  # prioritize blocking the player a bit more for center squares
+            score -= 20
+
+    # 5. Corners
+    corners = [(0, 0), (0, 3), (3, 0), (3, 3)]
+    for corner in corners:
+        if board[corner[0]][corner[1]] == 'O':
+            score += 10
+        elif board[corner[0]][corner[1]] == 'X':
+            score -= 15
+
+    # 6. Block opponent
+    for line in all_possible_lines(board):
+        if line.count('O') == 2 and line.count('') == 2:
+            score += 20
+        elif line.count('X') == 2 and line.count('') == 2:
+            score -= 40
+
+        if line.count('O') == 1 and line.count('') == 3:
+            score += 5
+        elif line.count('X') == 1 and line.count('') == 3:
+            score -= 10
 
     return score
 
